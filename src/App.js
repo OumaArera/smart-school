@@ -8,6 +8,7 @@ import StudentBalances from './StudentBalances';
 import Reports from './Report';
 import Budget from './Budget';
 import BudgetReview from './BudgetReview';
+import Signup from './Signup';
 
 function App() {
 
@@ -83,6 +84,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
           <Route path="/payment" element={<Payment />} />
           <Route path="/transaction-history" element={<TransactionHistory />} />
           <Route path="/student-balances" element={<StudentBalances />} />
