@@ -1,6 +1,6 @@
 import React, { useState } from "react";
+import { NavLink, useNavigate } from 'react-router-dom'; // Import NavLink for navigation
 import { jwtDecode } from 'jwt-decode';
-import { NavLink, useNavigate } from 'react-router-dom';
 import logogi from './images/SCHOOL LOGO.PNG';
 
 const LOGIN_URL = "https://smart-school-server-9aqb.onrender.com/users/login";
@@ -126,16 +126,17 @@ const Login = () => {
           >
             {isSubmitting ? "Submitting..." : "LOGIN"}
           </button>
-        </form>
-        <div className="text-center mt-4">
+
+          {/* NavLink for "I can't access my account" */}
+          <div className="text-center mt-4">
             <NavLink
               to="/reset-password"
-              className="text-blue-700 hover:text-blue-500 transition"
+              className="text-yellow-400 hover:text-yellow-500 transition"
             >
               I can't access my account
             </NavLink>
           </div>
-
+        </form>
       </div>
     </div>
   );
