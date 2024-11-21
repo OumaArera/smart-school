@@ -1,14 +1,16 @@
 import React, { useState } from "react";
 import { jwtDecode } from 'jwt-decode';
+import { useNavigate } from 'react-router-dom'; // For navigation
 import logogi from './images/SCHOOL LOGO.PNG';
 
-const LOGIN_URL="https://smart-school-server-9aqb.onrender.com/users/login";
+const LOGIN_URL = "https://smart-school-server-9aqb.onrender.com/users/login";
 
 const Login = () => {
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState('');
+  const navigate = useNavigate(); // Hook to navigate to specific routes
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,27 +28,41 @@ const Login = () => {
       setIsSubmitting(false);
       return;
     }
+    
     try {
-      // Replace the following with an actual API call
       const res = await fetch(LOGIN_URL, {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(formData)
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
+
       const result = await res.json();
 
-      if(result.success){
+      if (result.success) {
         setFormData({ username: "", password: "" });
         const decodedToken = jwtDecode(result.token);
         const userDetails = {
           id: decodedToken.id,
           username: decodedToken.username,
           name: decodedToken.name,
-          role: decodedToken.role
+          role: decodedToken.role,
         };
+
+        // Store user details and token in localStorage
         localStorage.setItem("userData", JSON.stringify(userDetails));
         localStorage.setItem("accessToken", result.token);
-      }else{
+
+        // Redirect based on role
+        if (userDetails.role === 'director') {
+          navigate('/director-dashboard');
+        } else if (userDetails.role === 'manager') {
+          navigate('/manager-dashboard');
+        } else if (userDetails.role === 'accountant') {
+          navigate('/accountant-dashboard');
+        } else {
+          setMessage('Unknown user type');
+        }
+      } else {
         setMessage(result.message);
         setTimeout(() => setMessage(""), 5000);
       }
@@ -54,7 +70,7 @@ const Login = () => {
     } catch (error) {
       console.error("Submission failed:", error);
       setMessage("Failed to submit. Please try again.");
-        setTimeout(() => setMessage(""), 5000);
+      setTimeout(() => setMessage(""), 5000);
     } finally {
       setIsSubmitting(false);
     }
@@ -62,19 +78,16 @@ const Login = () => {
 
   return (
     <div className="flex h-screen">
-      {/* Left section */}
       <div className="w-1/2 bg-yellow-100 flex flex-col items-center justify-center">
         <img src={logogi} alt="School Logo" className="w-1/2 mb-4" />
         <h1 className="text-lg font-bold text-gray-800">LIVING FAITH SCHOOL</h1>
       </div>
 
-      {/* Right section */}
       <div className="w-1/2 bg-[#1D276C] flex items-center justify-center text-white">
         <form className="w-3/4 space-y-6" onSubmit={handleSubmit}>
           <h2 className="text-2xl font-bold">Login into your account</h2>
           {message && <p className="text-red-500 mb-4">{message}</p>}
           <div className="space-y-4">
-            {/* Username (Email) input */}
             <input
               type="email"
               name="username"
@@ -84,8 +97,6 @@ const Login = () => {
               className="w-full p-3 border rounded-lg text-black"
               required
             />
-
-            {/* Password input */}
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -108,7 +119,6 @@ const Login = () => {
             </div>
           </div>
 
-          {/* Submit button */}
           <button
             type="submit"
             className="w-full p-3 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 transition"
@@ -116,11 +126,6 @@ const Login = () => {
           >
             {isSubmitting ? "Submitting..." : "LOGIN"}
           </button>
-
-          {/* Forgot password */}
-          <p className="text-center text-sm mt-4">
-            <a href="#" className="underline">I can't access my account</a>
-          </p>
         </form>
       </div>
     </div>

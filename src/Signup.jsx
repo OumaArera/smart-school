@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import logogi from './images/SCHOOL LOGO.PNG'; 
 
-const SIGNUP_URL='https://smart-school-server-9aqb.onrender.com/users/signup';
+const SIGNUP_URL = 'https://smart-school-server-9aqb.onrender.com/users/signup';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
     name: "",
     nationalId: "",
-    pfNumber: "",
-    role: "",
+    pfNo: "",
+    role: "", 
     username: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,30 +36,30 @@ const Signup = () => {
     try {
       const res = await fetch(SIGNUP_URL, {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(formData)
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
       const result = await res.json();
 
-      if(result.success){
+      if (result.success) {
         setFormData({
           name: "",
           nationalId: "",
-          pfNumber: "",
-          role: "",
+          pfNo: "",
+          role: "", // Reset role as well
           username: "",
         });
         setMessage(result.message);
         setTimeout(() => setMessage(""), 5000);
-      }else{
+      } else {
         setError(result.message);
         setTimeout(() => setError(""), 5000);
       }
-      
+
     } catch (error) {
       console.error("Signup failed:", error);
       setError("Failed to signup. Please try again.");
-        setTimeout(() => setError(""), 5000);
+      setTimeout(() => setError(""), 5000);
     } finally {
       setIsSubmitting(false);
     }
@@ -106,24 +106,27 @@ const Signup = () => {
             {/* PF Number input */}
             <input
               type="text"
-              name="pfNumber"
-              value={formData.pfNumber}
+              name="pfNo"
+              value={formData.pfNo}
               onChange={handleChange}
               placeholder="PF Number"
               className="w-full p-3 border rounded-lg text-black"
               required
             />
 
-            {/* Role input */}
-            <input
-              type="text"
+            {/* Role select */}
+            <select
               name="role"
               value={formData.role}
               onChange={handleChange}
-              placeholder="Role"
               className="w-full p-3 border rounded-lg text-black"
               required
-            />
+            >
+              <option value="" disabled>Select Role</option>
+              <option value="director">director</option>
+              <option value="manager">manager</option>
+              <option value="accountant">accountant</option>
+            </select>
 
             {/* Username (Email) input */}
             <input

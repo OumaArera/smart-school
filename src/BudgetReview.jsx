@@ -1,18 +1,12 @@
 import React, { useEffect, useState } from "react";
 
 const BUDGET_URL = "https://smart-school-server-9aqb.onrender.com/users/budget";
-const BALANCE_URL= "https://smart-school-server-9aqb.onrender.com/users/balance";
+const BALANCE_URL = "https://smart-school-server-9aqb.onrender.com/users/balance";
 
 const BudgetReview = () => {
-  const [reviewState, setReviewState] = useState(
-    budgets.map((budget) => ({
-      ...budget,
-      status: null,
-      reason: "",
-    }))
-  );
+  const [budgets, setBudgets] = useState([]);  // Initialize budgets as an empty array
+  const [reviewState, setReviewState] = useState([]);  // Initialize reviewState as an empty array
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [budgets, setBudgets] = useState([]);
   const [token, setToken] = useState("");
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState("");
@@ -23,40 +17,40 @@ const BudgetReview = () => {
     if (storedToken) setToken(storedToken);
   }, []);
 
-  useEffect(()=>{
-    pendingBudgets();
-    accountBalance();
-  }, [])
+  useEffect(() => {
+    if (token) {
+      pendingBudgets();
+      accountBalance();
+    }
+  }, [token]);
 
-  const accountBalance= async ()=>{
-    if(!token) return;
+  const accountBalance = async () => {
+    if (!token) return;
     try {
       const response = await fetch(BALANCE_URL, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
-        }
+        },
       });
       const result = await response.json();
 
-      if(result.success){
-        setBalance(result.data.balance)
-      } else{
+      if (result.success) {
+        setBalance(result.data.balance);
+      } else {
         setMessage(result.message);
-        setTimeout(()=> setMessage(""), 5000);
+        setTimeout(() => setMessage(""), 5000);
       }
-      
     } catch (error) {
-        console.log("Error: ", error)
-        setMessage("Failed to get budgets");
-        setTimeout(()=> setMessage(""), 5000);
-      
+      console.log("Error: ", error);
+      setMessage("Failed to get account balance");
+      setTimeout(() => setMessage(""), 5000);
     }
-  }
+  };
 
-  const pendingBudgets = async () =>{
-    if(!token) return;
+  const pendingBudgets = async () => {
+    if (!token) return;
 
     try {
       const response = await fetch(BUDGET_URL, {
@@ -64,25 +58,30 @@ const BudgetReview = () => {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
-        }
+        },
       });
       const result = await response.json();
 
-      if(result.success){
-        setBudgets(result.data)
-      } else{
+      if (result.success) {
+        setBudgets(result.data);
+        // Initialize reviewState with the fetched budget data
+        const initialReviewState = result.data.map((budget) => ({
+          ...budget,
+          status: null,
+          reason: "",
+        }));
+        setReviewState(initialReviewState);
+      } else {
         setMessage(result.message);
-        setTimeout(()=> setMessage(""), 5000);
+        setTimeout(() => setMessage(""), 5000);
       }
-      
     } catch (error) {
-        console.log("Error: ", error)
-        setMessage("Failed to get budgets");
-        setTimeout(()=> setMessage(""), 5000);
+      console.log("Error: ", error);
+      setMessage("Failed to get budgets");
+      setTimeout(() => setMessage(""), 5000);
     }
-  }
+  };
 
-  // Handle changes in the approval/decline reason for each budget
   const handleReasonChange = (e, index) => {
     const { value } = e.target;
     const updatedState = [...reviewState];
@@ -90,14 +89,12 @@ const BudgetReview = () => {
     setReviewState(updatedState);
   };
 
-  // Handle approve/decline action
   const handleAction = async (e, index, action) => {
     e.preventDefault();
-    if(!token) return;
+    if (!token) return;
     const updatedState = [...reviewState];
     updatedState[index].status = action;
 
-    // Validate reason if declining
     if (action === "decline" && !updatedState[index].reason) {
       alert("Please provide a reason for declining.");
       return;
@@ -111,7 +108,7 @@ const BudgetReview = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({status: action, reason: updatedState[index].reason})
+        body: JSON.stringify({ status: action, reason: updatedState[index].reason }),
       });
 
       const result = await response.json();
@@ -119,14 +116,14 @@ const BudgetReview = () => {
       if (result.success) {
         setReviewState(updatedState);
         setSuccess(result.message);
-        setTimeout(()=> setSuccess(""), 5000);
+        setTimeout(() => setSuccess(""), 5000);
         pendingBudgets();
         accountBalance();
-      } 
+      }
     } catch (error) {
       console.error("Error processing budget action:", error);
       setMessage("An error occurred while processing the action.");
-      setTimeout(()=> setMessage(""), 5000)
+      setTimeout(() => setMessage(""), 5000);
     } finally {
       setIsSubmitting(false);
     }
