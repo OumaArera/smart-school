@@ -37,7 +37,7 @@ const Login = () => {
 
       if(result.success){
         setFormData({ username: "", password: "" });
-        const decodedToken = jwtDecode(data.token);
+        const decodedToken = jwtDecode(result.token);
         const userDetails = {
           id: decodedToken.id,
           username: decodedToken.username,
@@ -45,7 +45,7 @@ const Login = () => {
           role: decodedToken.role
         };
         localStorage.setItem("userData", JSON.stringify(userDetails));
-        localStorage.setItem("accessToken", data.token);
+        localStorage.setItem("accessToken", result.token);
       }else{
         setMessage(result.message);
         setTimeout(() => setMessage(""), 5000);

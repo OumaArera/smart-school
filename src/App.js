@@ -5,12 +5,12 @@ import Login from "./Login";
 import Payment from "./Payment";
 import TransactionHistory from "./TransactionHistory";
 import StudentBalances from "./StudentBalances";
-import Reports from "./Reports";
+import Report from "./Report";
 import Budget from "./Budget";
 import BudgetReview from "./BudgetReview";
 import Signup from "./Signup";
 import Layout from "./Layout";
-import useAutoLogout from "./Logout";
+// import useAutoLogout from "./Logout";
 
 const ProtectedRoute = ({ children, role }) => {
   const userData = JSON.parse(localStorage.getItem("userData"));
@@ -21,7 +21,7 @@ const ProtectedRoute = ({ children, role }) => {
 };
 
 function App() {
-  useAutoLogout();
+  // useAutoLogout();
   return (
     <Router>
       <Routes>
@@ -39,7 +39,7 @@ function App() {
           <Route path="/payment" element={<ProtectedRoute role="accountant"><Payment /></ProtectedRoute>} />
           <Route path="/transaction-history" element={<ProtectedRoute role="accountant"><TransactionHistory /></ProtectedRoute>} />
           <Route path="/student-balances" element={<ProtectedRoute role="accountant"><StudentBalances /></ProtectedRoute>} />
-          <Route path="/reports" element={<ProtectedRoute role="director"><Reports /></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute role="director"><Report /></ProtectedRoute>} />
           <Route path="/budget" element={<ProtectedRoute role="manager"><Budget /></ProtectedRoute>} />
           <Route path="/budget-review" element={<ProtectedRoute role="director"><BudgetReview /></ProtectedRoute>} />
         </Route>
