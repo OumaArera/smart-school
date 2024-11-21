@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import axios from "axios";
 
 const CREATE_STUDENT_URL = "https://smart-school-server-9aqb.onrender.com/users/student"; 
 
@@ -40,17 +39,18 @@ const CreateStudent = () => {
     }
 
     try {
-      const response = await axios.post(
-        CREATE_STUDENT_URL,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      const response = await fetch(CREATE_STUDENT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(formData)
+      });
 
-      if (response.data.success) {
+      const result = await response.json();
+
+      if (result.success) {
         setMessage("Student created successfully!");
         setFormData({
           name: "",
@@ -64,7 +64,7 @@ const CreateStudent = () => {
           fees: ""
         });
       } else {
-        setMessage(response.data.message);
+        setMessage(result.message);
       }
     } catch (error) {
       setMessage("Error creating student. Please try again.");
