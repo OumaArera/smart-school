@@ -46,12 +46,12 @@ const DirectorDashboard = () => {
         >
           Student Balances
         </button>
-        <button
+        {/* <button
           onClick={() => setActiveTab('reports')}
           className="w-full py-2 px-4 mb-4 rounded-lg bg-blue-500 hover:bg-blue-600 transition"
         >
           Reports
-        </button>
+        </button> */}
         <button
           onClick={() => setActiveTab('budget')}
           className="w-full py-2 px-4 mb-4 rounded-lg bg-blue-500 hover:bg-blue-600 transition"
