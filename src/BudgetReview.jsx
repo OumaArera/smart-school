@@ -181,8 +181,8 @@ const BudgetReview = () => {
                 onChange={(e) => handleStatusChange(e, index)}
                 className="mt-2 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="approve">Approve</option>
-                <option value="decline">Decline</option>
+                <option value="approved">Approve</option>
+                <option value="declined">Decline</option>
               </select>
             </div>
 

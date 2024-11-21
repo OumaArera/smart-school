@@ -9,6 +9,7 @@ const Budget = () => {
     items: [{ reason: "", unit: "", costPerUnit: "", quantity: "", total: 0 }],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fetchingBudgets, setFetchingBudgets] = useState(false);  // New state to manage fetching
   const [errorMessage, setErrorMessage] = useState("");
   const [success, setSuccess] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -21,6 +22,7 @@ const Budget = () => {
     if (storedToken) setToken(storedToken);
   }, []);
 
+  // Fetch budgets by date range
   const fetchBudgetsByDateRange = async () => {
     if (!token) return;
 
@@ -29,6 +31,8 @@ const Budget = () => {
       setTimeout(() => setErrorMessage(""), 5000);
       return;
     }
+
+    setFetchingBudgets(true);  // Set fetching state to true
 
     try {
       const response = await fetch(`${MY_BUDGET_URL}?start=${startDate}&end=${endDate}`, {
@@ -41,8 +45,8 @@ const Budget = () => {
 
       const result = await response.json();
       if (result.success) {
-        setBudgets(result.data);
-        setSuccess("Budgets retrieved successfully!");
+        setBudgets(result.data);  // Update state with fetched budgets
+        setSuccess(result.message);
         setTimeout(() => setSuccess(""), 5000);
       } else {
         setErrorMessage(result.message);
@@ -52,6 +56,8 @@ const Budget = () => {
       console.error("Error fetching budgets:", error);
       setErrorMessage("An error occurred while fetching budgets.");
       setTimeout(() => setErrorMessage(""), 5000);
+    } finally {
+      setFetchingBudgets(false);  // Set fetching state to false after completion
     }
   };
 
@@ -98,7 +104,7 @@ const Budget = () => {
 
       const result = await response.json();
       if (result.success) {
-        fetchBudgetsByDateRange(); // Refresh the budgets list
+        fetchBudgetsByDateRange(); // Refresh the budgets list after successful submission
         setBudget({
           category: "",
           items: [{ reason: "", unit: "", costPerUnit: "", quantity: "", total: 0 }],
@@ -200,7 +206,6 @@ const Budget = () => {
                     value={item.total}
                     readOnly
                     className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100"
-                    placeholder="Total cost per item"
                   />
                 </div>
               </div>
@@ -209,66 +214,87 @@ const Budget = () => {
           <button
             type="button"
             onClick={handleAddItem}
-            className="w-full px-6 py-3 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none mt-4"
+            className="mt-2 py-2 px-4 text-white bg-blue-500 hover:bg-blue-700 rounded-md focus:outline-none"
           >
             Add Item
           </button>
         </div>
 
         <div className="mb-6">
-          <h3 className="text-xl font-bold text-blue-600 mb-2">Total Cost: KES {calculateTotalCost()}</h3>
-        </div>
-
-        {errorMessage && <div className="text-red-500 text-sm mb-4"><strong>{errorMessage}</strong></div>}
-        {success && <div className="text-green-600 text-sm mb-4"><strong>{success}</strong></div>}
-
-        <div className="flex justify-center">
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`px-6 py-3 rounded-md ${isSubmitting ? "bg-gray-400" : "bg-blue-500"} text-white hover:bg-blue-600 focus:outline-none`}
+            className={`py-2 px-4 text-white rounded-md focus:outline-none ${
+              isSubmitting ? "bg-gray-500 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+            }`}
           >
             {isSubmitting ? "Submitting..." : "Submit Budget"}
           </button>
         </div>
+
+        {errorMessage && (
+          <div className="text-red-500 text-sm mb-4">{errorMessage}</div>
+        )}
+
+        {success && (
+          <div className="text-green-500 text-sm mb-4">{success}</div>
+        )}
       </form>
 
-      <div className="mt-12">
-        <h2 className="text-2xl font-bold text-blue-600 mb-4">Fetch Budgets by Date</h2>
-        <div className="grid grid-cols-2 gap-4">
+      <div className="mt-8">
+        <h2 className="text-2xl font-bold text-blue-600">Budgets</h2>
+        <div className="mt-4">
           <input
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            className="mr-2"
           />
           <input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            className="mr-2"
           />
+          <button
+            onClick={fetchBudgetsByDateRange}
+            disabled={fetchingBudgets}
+            className={`py-2 px-4 text-white rounded-md focus:outline-none ${
+              fetchingBudgets ? "bg-gray-500 cursor-not-allowed" : "bg-green-500 hover:bg-green-700"
+            }`}
+          >
+            {fetchingBudgets ? "Loading..." : "Search Budgets"}
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={fetchBudgetsByDateRange}
-          className="w-full px-6 py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none mt-4"
-        >
-          Fetch Budgets
-        </button>
 
-        {budgets.length > 0 && (
-          <div className="mt-6">
-            <h3 className="text-lg font-bold text-gray-700 mb-4">Budgets:</h3>
-            <ul className="list-disc list-inside">
-              {budgets.map((budget, index) => (
-                <li key={index}>
-                  <strong>Category:</strong> {budget.category} | <strong>Total:</strong> KES {budget.totalCost}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <div className="mt-4">
+          {budgets.length === 0 ? (
+            <p>No budgets found for the selected date range.</p>
+          ) : (
+            <table className="w-full border-collapse">
+              <thead>
+                <tr>
+                  <th className="border py-2 px-4">Category</th>
+                  <th className="border py-2 px-4">Item</th>
+                  <th className="border py-2 px-4">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {budgets.map((budget) => (
+                  <tr key={budget._id}>
+                    <td className="border py-2 px-4">{budget.category}</td>
+                    {budget.items.map((item, index) => (
+                      <tr key={index}>
+                        <td className="border py-2 px-4">{item.unit}</td>
+                        <td className="border py-2 px-4">{item.total}</td>
+                      </tr>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
     </div>
   );
