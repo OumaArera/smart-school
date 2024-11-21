@@ -4,8 +4,8 @@ const BUDGET_URL = "https://smart-school-server-9aqb.onrender.com/users/budget";
 const BALANCE_URL = "https://smart-school-server-9aqb.onrender.com/users/balance";
 
 const BudgetReview = () => {
-  const [budgets, setBudgets] = useState([]);  // Initialize budgets as an empty array
-  const [reviewState, setReviewState] = useState([]);  // Initialize reviewState as an empty array
+  const [budgets, setBudgets] = useState([]);
+  const [reviewState, setReviewState] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [token, setToken] = useState("");
   const [message, setMessage] = useState("");
@@ -137,7 +137,7 @@ const BudgetReview = () => {
 
       {balance !== null && (
         <div className="mb-6 p-4 bg-blue-50 rounded-lg shadow-md">
-          <h2 className="text-lg font-semibold text-blue-600">Account Balance: KES {balance}</h2>
+          <h2 className="text-lg font-semibold text-blue-600">Account Balance: KES {balance.toLocaleString()}</h2>
         </div>
       )}
 
@@ -150,7 +150,7 @@ const BudgetReview = () => {
               <ul className="list-inside list-disc pl-4">
                 {budget.items.map((item, itemIndex) => (
                   <li key={itemIndex} className="text-gray-800">
-                    <strong>{item.reason}:</strong> {item.unit} at KES {item.costPerUnit} x {item.quantity} = KES {item.total}
+                    <strong>{item.reason}:</strong> {item.unit} at KES {Number(item.costPerUnit).toLocaleString()} x {Number(item.quantity).toLocaleString()} = KES {Number(item.total).toLocaleString()}
                   </li>
                 ))}
               </ul>
