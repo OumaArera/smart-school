@@ -13,7 +13,6 @@ const BudgetReview = () => {
   const [balance, setBalance] = useState([]);
   const [actionInProgress, setActionInProgress] = useState(null); // Track which action is in progress
 
-
   useEffect(() => {
     const storedToken = localStorage.getItem("accessToken");
     if (storedToken) setToken(storedToken);
@@ -69,7 +68,7 @@ const BudgetReview = () => {
         // Initialize reviewState with the fetched budget data
         const initialReviewState = result.data.map((budget) => ({
           ...budget,
-          status: null,
+          status: "pending", // default status is "pending"
           reason: "",
         }));
         setReviewState(initialReviewState);
@@ -91,36 +90,43 @@ const BudgetReview = () => {
     setReviewState(updatedState);
   };
 
-  const handleAction = async (e, index, action) => {
+  const handleStatusChange = (e, index) => {
+    const { value } = e.target;
+    const updatedState = [...reviewState];
+    updatedState[index].status = value;
+    setReviewState(updatedState);
+  };
+
+  const handleSubmit = async (e, index) => {
     e.preventDefault();
     if (!token) return;
-  
+
     const updatedState = [...reviewState];
-    updatedState[index].status = action;
-  
-    if (action === "decline" && !updatedState[index].reason) {
-      alert("Please provide a reason for declining.");
+    const budget = updatedState[index];
+    
+    if (!budget.reason) {
+      alert("Please provide a reason.");
       return;
     }
-  
-    setActionInProgress(action); // Set the action in progress (either "approve" or "decline")
+
+    setActionInProgress(budget.status); // Set the action in progress
     setIsSubmitting(true); // Show loading indicator
-  
+
     try {
-      const response = await fetch(`${BUDGET_URL}/${updatedState[index].id}`, {
+      const response = await fetch(`${BUDGET_URL}/${budget.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          status: action,
-          reason: updatedState[index].reason || null,
+          status: budget.status,
+          reason: budget.reason,
         }),
       });
-  
+
       const result = await response.json();
-  
+
       if (result.success) {
         setReviewState(updatedState);
         setSuccess(result.message);
@@ -140,7 +146,6 @@ const BudgetReview = () => {
       setActionInProgress(null); // Reset the action in progress state
     }
   };
-  
 
   return (
     <div className="max-w-4xl mx-auto p-8 bg-white rounded-lg shadow-md">
@@ -155,51 +160,53 @@ const BudgetReview = () => {
       )}
 
       <div>
-      {reviewState.map((budget, index) => (
-        <div key={budget.id} className="mb-6 p-6 border rounded-lg shadow-sm bg-gray-50">
-          <h2 className="text-xl font-semibold text-blue-600">{budget.category}</h2>
-          <div className="mt-4">
-            <h3 className="text-lg font-semibold text-gray-700">Items:</h3>
-            <ul className="list-inside list-disc pl-4">
-              {budget.items.map((item, itemIndex) => (
-                <li key={itemIndex} className="text-gray-800">
-                  <strong>{item.reason}:</strong> {item.unit} at KES {Number(item.costPerUnit).toLocaleString()} x {Number(item.quantity).toLocaleString()} = KES {Number(item.total).toLocaleString()}
-                </li>
-              ))}
-            </ul>
-          </div>
+        {reviewState.map((budget, index) => (
+          <div key={budget.id} className="mb-6 p-6 border rounded-lg shadow-sm bg-gray-50">
+            <h2 className="text-xl font-semibold text-blue-600">{budget.category}</h2>
+            <div className="mt-4">
+              <h3 className="text-lg font-semibold text-gray-700">Items:</h3>
+              <ul className="list-inside list-disc pl-4">
+                {budget.items.map((item, itemIndex) => (
+                  <li key={itemIndex} className="text-gray-800">
+                    <strong>{item.reason}:</strong> {item.unit} at KES {Number(item.costPerUnit).toLocaleString()} x {Number(item.quantity).toLocaleString()} = KES {Number(item.total).toLocaleString()}
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700">
-              Reason for {budget.status === "approve" ? "Approval" : "Declining"}
-            </label>
-            <textarea
-              value={budget.reason || ""}
-              onChange={(e) => handleReasonChange(e, index)}
-              className="mt-2 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Provide a reason for your decision..."
-            />
-          </div>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700">Status</label>
+              <select
+                value={budget.status}
+                onChange={(e) => handleStatusChange(e, index)}
+                className="mt-2 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="approve">Approve</option>
+                <option value="decline">Decline</option>
+              </select>
+            </div>
 
-          <div className="mt-4 flex justify-between">
-            <button
-              onClick={(e) => handleAction(e, index, "approve")}
-              disabled={isSubmitting || budget.status === 'approved'}
-              className="px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none"
-            >
-              {isSubmitting && actionInProgress === "approve" ? "Processing..." : "Approve"}
-            </button>
-            <button
-              onClick={(e) => handleAction(e, index, "decline")}
-              disabled={isSubmitting || budget.status === 'declined'}
-              className="px-6 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none"
-            >
-              {isSubmitting && actionInProgress === "decline" ? "Processing..." : "Decline"}
-            </button>
-          </div>
-        </div>
-      ))}
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700">Reason</label>
+              <textarea
+                value={budget.reason || ""}
+                onChange={(e) => handleReasonChange(e, index)}
+                className="mt-2 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Provide a reason for your decision..."
+              />
+            </div>
 
+            <div className="mt-4">
+              <button
+                onClick={(e) => handleSubmit(e, index)}
+                disabled={isSubmitting}
+                className="w-full px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none"
+              >
+                {isSubmitting && actionInProgress === budget.status ? "Processing..." : "Submit"}
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
