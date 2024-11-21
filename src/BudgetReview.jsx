@@ -100,18 +100,17 @@ const BudgetReview = () => {
   const handleSubmit = async (e, index) => {
     e.preventDefault();
     if (!token) return;
-
+  
     const updatedState = [...reviewState];
     const budget = updatedState[index];
-    
+  
     if (!budget.reason) {
       alert("Please provide a reason.");
       return;
     }
-
-    setActionInProgress(budget.status); // Set the action in progress
-    setIsSubmitting(true); // Show loading indicator
-
+  
+    setActionInProgress(budget.id); // Track the specific budget being processed
+  
     try {
       const response = await fetch(`${BUDGET_URL}/${budget.id}`, {
         method: "PUT",
@@ -124,15 +123,17 @@ const BudgetReview = () => {
           reason: budget.reason,
         }),
       });
-
+  
       const result = await response.json();
-
+  
       if (result.success) {
-        setReviewState(updatedState);
+        // Remove the processed budget from the state
+        const remainingBudgets = updatedState.filter((_, i) => i !== index);
+        setReviewState(remainingBudgets);
+  
         setSuccess(result.message);
         setTimeout(() => setSuccess(""), 5000);
-        pendingBudgets();
-        accountBalance();
+        accountBalance(); // Update the account balance
       } else {
         setMessage(result.message);
         setTimeout(() => setMessage(""), 5000);
@@ -142,10 +143,11 @@ const BudgetReview = () => {
       setMessage("An error occurred while processing the action.");
       setTimeout(() => setMessage(""), 5000);
     } finally {
-      setIsSubmitting(false); // Hide the loading indicator
-      setActionInProgress(null); // Reset the action in progress state
+      setActionInProgress(null); // Reset action tracking
     }
   };
+  
+  
 
   return (
     <div className="max-w-4xl mx-auto p-8 bg-white rounded-lg shadow-md">
@@ -159,55 +161,70 @@ const BudgetReview = () => {
         </div>
       )}
 
-      <div>
-        {reviewState.map((budget, index) => (
-          <div key={budget.id} className="mb-6 p-6 border rounded-lg shadow-sm bg-gray-50">
-            <h2 className="text-xl font-semibold text-blue-600">{budget.category}</h2>
-            <div className="mt-4">
-              <h3 className="text-lg font-semibold text-gray-700">Items:</h3>
-              <ul className="list-inside list-disc pl-4">
-                {budget.items.map((item, itemIndex) => (
-                  <li key={itemIndex} className="text-gray-800">
-                    <strong>{item.reason}:</strong> {item.unit} at KES {Number(item.costPerUnit).toLocaleString()} x {Number(item.quantity).toLocaleString()} = KES {Number(item.total).toLocaleString()}
-                  </li>
-                ))}
-              </ul>
-            </div>
+        <div>
+          {reviewState.map((budget, index) => (
+            <div
+              key={budget.id}
+              className="mb-6 p-6 border rounded-lg shadow-sm bg-gray-50"
+            >
+              <h2 className="text-xl font-semibold text-blue-600">{budget.category}</h2>
+              <div className="mt-4">
+                <h3 className="text-lg font-semibold text-gray-700">Items:</h3>
+                <ul className="list-inside list-disc pl-4">
+                  {budget.items.map((item, itemIndex) => (
+                    <li key={itemIndex} className="text-gray-800">
+                      <strong>{item.reason}:</strong> {item.unit} at KES{" "}
+                      {Number(item.costPerUnit).toLocaleString()} x{" "}
+                      {Number(item.quantity).toLocaleString()} = KES{" "}
+                      {Number(item.total).toLocaleString()}
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700">Status</label>
-              <select
-                value={budget.status}
-                onChange={(e) => handleStatusChange(e, index)}
-                className="mt-2 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="approved">Approve</option>
-                <option value="declined">Decline</option>
-              </select>
-            </div>
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700">
+                  Status
+                </label>
+                <select
+                  value={budget.status}
+                  onChange={(e) => handleStatusChange(e, index)}
+                  className="mt-2 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="approved">Approve</option>
+                  <option value="declined">Decline</option>
+                </select>
+              </div>
 
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700">Reason</label>
-              <textarea
-                value={budget.reason || ""}
-                onChange={(e) => handleReasonChange(e, index)}
-                className="mt-2 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Provide a reason for your decision..."
-              />
-            </div>
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700">
+                  Reason
+                </label>
+                <textarea
+                  value={budget.reason || ""}
+                  onChange={(e) => handleReasonChange(e, index)}
+                  className="mt-2 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Provide a reason for your decision..."
+                />
+              </div>
 
-            <div className="mt-4">
-              <button
-                onClick={(e) => handleSubmit(e, index)}
-                disabled={isSubmitting}
-                className="w-full px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none"
-              >
-                {isSubmitting && actionInProgress === budget.status ? "Processing..." : "Submit"}
-              </button>
+              <div className="mt-4">
+                <button
+                  onClick={(e) => handleSubmit(e, index)}
+                  disabled={actionInProgress === budget.id}
+                  className={`w-full px-6 py-2 ${
+                    actionInProgress === budget.id
+                      ? "bg-gray-500 cursor-not-allowed"
+                      : "bg-blue-500 hover:bg-blue-600"
+                  } text-white rounded-md focus:outline-none`}
+                >
+                  {actionInProgress === budget.id ? "Processing..." : "Submit"}
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+
     </div>
   );
 };

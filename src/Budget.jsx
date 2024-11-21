@@ -268,33 +268,74 @@ const Budget = () => {
         </div>
 
         <div className="mt-4">
-          {budgets.length === 0 ? (
-            <p>No budgets found for the selected date range.</p>
-          ) : (
-            <table className="w-full border-collapse">
-              <thead>
-                <tr>
-                  <th className="border py-2 px-4">Category</th>
-                  <th className="border py-2 px-4">Item</th>
-                  <th className="border py-2 px-4">Total</th>
+  {budgets.length === 0 ? (
+    <p>No budgets found for the selected date range.</p>
+  ) : (
+    <div>
+      <table className="w-full border-collapse">
+        <thead>
+          <tr>
+            <th className="border py-2 px-4">Category</th>
+            <th className="border py-2 px-4">Item</th>
+            <th className="border py-2 px-4">Cost Per Unit</th>
+            <th className="border py-2 px-4">Quantity</th>
+            <th className="border py-2 px-4">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {budgets.map((budget) => {
+            const totalBudgetCost = budget.items.reduce(
+              (sum, item) => sum + parseFloat(item.total || 0),
+              0
+            );
+
+            return (
+              <React.Fragment key={budget._id}>
+                <tr className="bg-gray-100">
+                  <td className="border py-2 px-4" colSpan="5">
+                    <strong>{budget.category}</strong>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {budgets.map((budget) => (
-                  <tr key={budget._id}>
-                    <td className="border py-2 px-4">{budget.category}</td>
-                    {budget.items.map((item, index) => (
-                      <tr key={index}>
-                        <td className="border py-2 px-4">{item.unit}</td>
-                        <td className="border py-2 px-4">{item.total}</td>
-                      </tr>
-                    ))}
+                {budget.items.map((item, index) => (
+                  <tr key={index}>
+                    <td className="border py-2 px-4"></td>
+                    <td className="border py-2 px-4">{item.unit}</td>
+                    <td className="border py-2 px-4">{item.costPerUnit}</td>
+                    <td className="border py-2 px-4">{item.quantity}</td>
+                    <td className="border py-2 px-4">{item.total}</td>
                   </tr>
                 ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+                <tr className="bg-blue-100">
+                  <td className="border py-2 px-4 font-bold" colSpan="4">
+                    Total for {budget.category}
+                  </td>
+                  <td className="border py-2 px-4 font-bold">{totalBudgetCost.toFixed(2)}</td>
+                </tr>
+              </React.Fragment>
+            );
+          })}
+        </tbody>
+      </table>
+      <div className="text-right mt-4">
+        <strong>
+          Grand Total:{" "}
+          {budgets
+            .reduce(
+              (grandTotal, budget) =>
+                grandTotal +
+                budget.items.reduce(
+                  (sum, item) => sum + parseFloat(item.total || 0),
+                  0
+                ),
+              0
+            )
+            .toFixed(2)}
+        </strong>
+      </div>
+    </div>
+  )}
+</div>
+
       </div>
     </div>
   );
