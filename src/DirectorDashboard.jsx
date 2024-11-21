@@ -9,6 +9,7 @@ import Budget from './Budget';
 import BudgetReview from './BudgetReview'; 
 import Signup from "./Signup";
 import CreateStudent from "./CreateStudent";
+import ChangePassword from "./ChangePassword";
 
 const DirectorDashboard = () => {
   const [activeTab, setActiveTab] = useState('payment');
@@ -76,6 +77,12 @@ const DirectorDashboard = () => {
         >
           Create User
         </button>
+        <button
+          onClick={() => setActiveTab('change-password')}
+          className="w-full py-2 px-4 mb-4 rounded-lg bg-blue-500 hover:bg-blue-600 transition"
+        >
+          Change Password
+        </button>
 
         {/* Logout Button */}
         <button
@@ -99,6 +106,12 @@ const DirectorDashboard = () => {
           <div>
             <h2 className="text-3xl font-bold mb-6">Transaction History</h2>
             <TransactionHistory /> {/* Replace with actual TransactionHistory component */}
+          </div>
+        )}
+        {activeTab === 'change-password' && (
+          <div>
+            <h2 className="text-3xl font-bold mb-6">Change Password</h2>
+            <ChangePassword /> 
           </div>
         )}
         {activeTab === 'student-balances' && (

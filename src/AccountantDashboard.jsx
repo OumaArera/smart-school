@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Payment from './Payment';
 import TransactionHistory from './TransactionHistory'; 
 import StudentBalances from './StudentBalances'; 
+import ChangePassword from "./ChangePassword";
 
 const AccountantDashboard = () => {
   const [activeTab, setActiveTab] = useState('payment');
@@ -41,6 +42,12 @@ const AccountantDashboard = () => {
         >
           Student Balances
         </button>
+        <button
+          onClick={() => setActiveTab('change-password')}
+          className="w-full py-2 px-4 mb-4 rounded-lg bg-blue-500 hover:bg-blue-600 transition"
+        >
+          Change Password
+        </button>
 
         {/* Logout Button */}
         <button
@@ -58,6 +65,12 @@ const AccountantDashboard = () => {
           <div>
             <h2 className="text-3xl font-bold mb-6">Payment</h2>
             <Payment /> {/* Replace with actual Payment component */}
+          </div>
+        )}
+        {activeTab === 'change-password' && (
+          <div>
+            <h2 className="text-3xl font-bold mb-6">Change Password</h2>
+            <ChangePassword /> 
           </div>
         )}
         {activeTab === 'transaction-history' && (
