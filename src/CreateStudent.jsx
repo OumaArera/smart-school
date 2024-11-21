@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-const CREATE_STUDENT_URL = "https://your-api-url.com/routes/student"; // Replace with your actual API URL
+const CREATE_STUDENT_URL = "https://smart-school-server-9aqb.onrender.com/users/student"; 
 
 const CreateStudent = () => {
   const [formData, setFormData] = useState({
