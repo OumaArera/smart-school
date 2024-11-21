@@ -12,6 +12,16 @@ import ChangePassword from "./ChangePassword";
 const ManagerDashboard = () => {
   const [activeTab, setActiveTab] = useState('payment');
   const navigate = useNavigate();
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    const storedUserData = localStorage.getItem("userData");
+    if (storedUserData) {
+      setUserData(JSON.parse(storedUserData));
+    } else {
+      navigate("/"); 
+    }
+  }, [navigate]);
 
   // Handle logout
   const handleLogout = () => {
@@ -24,7 +34,17 @@ const ManagerDashboard = () => {
     <div className="min-h-screen flex flex-col md:flex-row bg-gray-100">
       {/* Sidebar */}
       <div className="w-full md:w-1/5 bg-gray-900 text-white p-6">
-        <h2 className="text-2xl font-bold mb-8">Manager Dashboard</h2>
+      {userData && (
+          <div className="flex items-center mb-8">
+            <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white text-xl font-bold">
+              {userData.name.charAt(0).toUpperCase()}
+            </div>
+            <div className="ml-4">
+              <h2 className="text-lg font-semibold">{userData.name}</h2>
+              <p className="text-sm text-gray-400 capitalize">{userData.role}</p>
+            </div>
+          </div>
+        )}
 
         {/* Sidebar Buttons */}
         <button
