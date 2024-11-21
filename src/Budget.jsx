@@ -279,7 +279,6 @@ const Budget = () => {
             <th className="border py-2 px-4">Item</th>
             <th className="border py-2 px-4">Cost Per Unit</th>
             <th className="border py-2 px-4">Quantity</th>
-            <th className="border py-2 px-4">Total</th>
           </tr>
         </thead>
         <tbody>
