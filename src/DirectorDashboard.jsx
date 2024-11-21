@@ -34,12 +34,12 @@ const DirectorDashboard = () => {
         >
           Payment
         </button>
-        <button
+        {/* <button
           onClick={() => setActiveTab('transaction-history')}
           className="w-full py-2 px-4 mb-4 rounded-lg bg-blue-500 hover:bg-blue-600 transition"
         >
           Transaction History
-        </button>
+        </button> */}
         <button
           onClick={() => setActiveTab('student-balances')}
           className="w-full py-2 px-4 mb-4 rounded-lg bg-blue-500 hover:bg-blue-600 transition"
