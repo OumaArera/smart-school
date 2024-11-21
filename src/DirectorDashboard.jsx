@@ -8,6 +8,7 @@ import Report from './Report';
 import Budget from './Budget'; 
 import BudgetReview from './BudgetReview'; 
 import Signup from "./Signup";
+import CreateStudent from "./CreateStudent";
 
 const DirectorDashboard = () => {
   const [activeTab, setActiveTab] = useState('payment');
@@ -64,6 +65,12 @@ const DirectorDashboard = () => {
           Budget Review
         </button>
         <button
+          onClick={() => setActiveTab('create-student')}
+          className="w-full py-2 px-4 mb-4 rounded-lg bg-blue-500 hover:bg-blue-600 transition"
+        >
+          Create Student
+        </button>
+        <button
           onClick={() => setActiveTab('signup')}
           className="w-full py-2 px-4 mb-4 rounded-lg bg-blue-500 hover:bg-blue-600 transition"
         >
@@ -104,6 +111,12 @@ const DirectorDashboard = () => {
           <div>
             <h2 className="text-3xl font-bold mb-6">Reports</h2>
             <Report /> {/* Replace with actual Reports component */}
+          </div>
+        )}
+        {activeTab === 'create-student' && (
+          <div>
+            <h2 className="text-3xl font-bold mb-6">Create Student</h2>
+            <CreateStudent /> {/* Replace with actual Reports component */}
           </div>
         )}
         {activeTab === 'budget' && (
