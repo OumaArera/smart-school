@@ -3,6 +3,8 @@ import ReactPaginate from "react-paginate";
 import { jsPDF } from "jspdf";
 import logo from './images/SCHOOL LOGO.PNG';
 
+const STUDENTS_URL = "https://smart-school-server-9aqb.onrender.com/users/fees";
+
 const StudentBalances = () => {
   const [students, setStudents] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
@@ -12,122 +14,60 @@ const StudentBalances = () => {
   const [yearFilter, setYearFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 5;
+  const [token, setToken] = useState("");
 
-  // Dummy student data
-  const dummyStudents = [
-    {
-      name: "John Doe",
-      course: "Computer Science",
-      semester: "Semester 1",
-      year: "4",
-      admissionNumber: "CS12345",
-      totalAmountPaid: "KES 50,000",
-      amountInArrears: "KES 5,000",
-    },
-    {
-      name: "Jane Smith",
-      course: "Business Administration",
-      semester: "Semester 2",
-      year: "1",
-      admissionNumber: "BA54321",
-      totalAmountPaid: "KES 60,000",
-      amountInArrears: "KES 10,000",
-    },
-    {
-      name: "Sam Johnson",
-      course: "Electrical Engineering",
-      semester: "Semester 1",
-      year: "1",
-      admissionNumber: "EE67890",
-      totalAmountPaid: "KES 70,000",
-      amountInArrears: "KES 2,000",
-    },
-    {
-      name: "Emma Williams",
-      course: "Nursing",
-      semester: "Semester 2",
-      year: "2",
-      admissionNumber: "NU11223",
-      totalAmountPaid: "KES 40,000",
-      amountInArrears: "KES 3,000",
-    },
-    {
-      name: "David Brown",
-      course: "Law",
-      semester: "Semester 1",
-      year: "3",
-      admissionNumber: "LA99123",
-      totalAmountPaid: "KES 45,000",
-      amountInArrears: "KES 7,000",
-    },
-    {
-        name: "John Doe",
-        course: "Computer Science",
-        semester: "Semester 1",
-        year: "4",
-        admissionNumber: "CS12345",
-        totalAmountPaid: "KES 50,000",
-        amountInArrears: "KES 5,000",
-      },
-      {
-        name: "Jane Smith",
-        course: "Business Administration",
-        semester: "Semester 2",
-        year: "1",
-        admissionNumber: "BA54321",
-        totalAmountPaid: "KES 60,000",
-        amountInArrears: "KES 10,000",
-      },
-      {
-        name: "Sam Johnson",
-        course: "Electrical Engineering",
-        semester: "Semester 1",
-        year: "1",
-        admissionNumber: "EE67890",
-        totalAmountPaid: "KES 70,000",
-        amountInArrears: "KES 2,000",
-      },
-      {
-        name: "Emma Williams",
-        course: "Nursing",
-        semester: "Semester 2",
-        year: "2",
-        admissionNumber: "NU11223",
-        totalAmountPaid: "KES 40,000",
-        amountInArrears: "KES 3,000",
-      },
-      {
-        name: "David Brown",
-        course: "Law",
-        semester: "Semester 1",
-        year: "3",
-        admissionNumber: "LA99123",
-        totalAmountPaid: "KES 45,000",
-        amountInArrears: "KES 7,000",
-      },
-  ];
+  useEffect(() => {
+    // Load token from localStorage
+    const storedToken = localStorage.getItem("accessToken");
+    if (storedToken) setToken(storedToken);
 
-  // Fetch student data (simulated with dummy data)
-  const fetchStudentData = async () => {
-    try {
-      // Simulate fetching data with dummy data
-      setStudents(dummyStudents);
-      setFilteredStudents(dummyStudents);
-    } catch (error) {
-      console.error("Error fetching student data", error);
-    }
-  };
+    // Fetch student data
+    const fetchStudentData = async () => {
+      try {
+        const response = await fetch(STUDENTS_URL, {
+          headers: {
+            Authorization: `Bearer ${storedToken}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch student data");
+        }
+
+        const result = await response.json();
+        if (result.success) {
+          const formattedStudents = result.data.map((student) => ({
+            ...student,
+            totalAmountPaid: student.feesPaidThisSemester.toLocaleString(),
+            amountInArrears: student.arrears.toLocaleString(),
+          }));
+          setStudents(formattedStudents);
+          setFilteredStudents(formattedStudents);
+        } else {
+          console.error("Error in response:", result.message);
+        }
+      } catch (error) {
+        console.error("Error fetching student data", error);
+      }
+    };
+
+    fetchStudentData();
+  }, []);
+
+  useEffect(() => {
+    filterStudents();
+  }, [courseFilter, semesterFilter, yearFilter]);
 
   // Filter students based on user input
   const filterStudents = () => {
     let filtered = students;
 
     if (courseFilter) filtered = filtered.filter((student) => student.course.toLowerCase().includes(courseFilter.toLowerCase()));
-    if (semesterFilter) filtered = filtered.filter((student) => student.semester.toLowerCase().includes(semesterFilter.toLowerCase()));
-    if (yearFilter) filtered = filtered.filter((student) => student.year === yearFilter);
-    
+    if (semesterFilter) filtered = filtered.filter((student) => student.semester.toString() === semesterFilter);
+    if (yearFilter) filtered = filtered.filter((student) => student.year.toString() === yearFilter);
+
     // Filter for students with arrears
-    filtered = filtered.filter((student) => parseInt(student.amountInArrears.replace(/[^\d.-]/g, "")) > 0);
+    filtered = filtered.filter((student) => parseInt(student.arrears, 10) > 0);
 
     setFilteredStudents(filtered);
   };
@@ -152,18 +92,16 @@ const StudentBalances = () => {
   // Generate PDF of filtered students
   const generatePDF = () => {
     const doc = new jsPDF();
-  
+
     // Add the logo to the header of the document
     doc.addImage(logo, "PNG", 10, 10, 50, 20); // Position: x=10, y=10, width=50, height=20
     doc.setFont("helvetica", "normal");
     doc.setFontSize(14);
     doc.text("Student Arrears Report", 70, 20);
-  
+
     // Add table header
-    const header = [
-      "Name", "Course", "Semester", "Year", "Admission No", "Total Amount Paid", "Amount in Arrears"
-    ];
-  
+    const header = ["Name", "Course", "Semester", "Year", "Admission No", "Total Amount Paid", "Amount in Arrears"];
+
     const tableData = filteredStudents.map((student) => [
       student.name,
       student.course,
@@ -173,62 +111,54 @@ const StudentBalances = () => {
       student.totalAmountPaid,
       student.amountInArrears,
     ]);
-  
+
     // Set column widths
     const columnWidths = [40, 40, 30, 20, 30, 40, 30];
     const rowHeight = 8;
-  
+
     // Add a header row
     let yOffset = 40;
     doc.setFontSize(10);
     header.forEach((col, index) => {
       doc.text(col, 10 + columnWidths.slice(0, index).reduce((a, b) => a + b, 0), yOffset);
     });
-    
+
     // Add student data in a table format
     yOffset += rowHeight;
     tableData.forEach((student, index) => {
       student.forEach((cell, colIndex) => {
-        doc.text(cell, 10 + columnWidths.slice(0, colIndex).reduce((a, b) => a + b, 0), yOffset);
+        doc.text(cell.toString(), 10 + columnWidths.slice(0, colIndex).reduce((a, b) => a + b, 0), yOffset);
       });
-  
+
       yOffset += rowHeight;
-  
+
       // Check if we need to add a new page
-      if (yOffset > 250) { // If the yOffset goes beyond the page's limit
+      if (yOffset > 250) {
         doc.addPage();
         doc.addImage(logo, "PNG", 10, 10, 50, 20); // Re-add the logo in the new page
         doc.text("Student Arrears Report", 70, 20); // Re-add the header text
         yOffset = 30; // Reset the offset for new page
       }
     });
-  
+
     // Footer Message (on the last page)
     doc.text(
       "Students are advised to complete their fees as soon as possible to avoid disruption of services.",
-      10, yOffset + 10
+      10,
+      yOffset + 10
     );
-  
+
     // Save the document
     doc.save("student-arrears-report.pdf");
   };
-  
-
-  useEffect(() => {
-    fetchStudentData();
-  }, []);
-
-  useEffect(() => {
-    filterStudents();
-  }, [courseFilter, semesterFilter, yearFilter]);
 
   const offset = currentPage * itemsPerPage;
   const paginatedStudents = filteredStudents.slice(offset, offset + itemsPerPage);
 
   // Extract unique values for dropdowns
   const courses = [...new Set(students.map((student) => student.course))];
-  const semesters = [...new Set(students.map((student) => student.semester))];
-  const years = [...new Set(students.map((student) => student.year))];
+  const semesters = [...new Set(students.map((student) => student.semester.toString()))];
+  const years = [...new Set(students.map((student) => student.year.toString()))];
 
   return (
     <div className="max-w-6xl mx-auto p-8 bg-gray-100 rounded-lg shadow-md">
@@ -306,7 +236,10 @@ const StudentBalances = () => {
           </thead>
           <tbody>
             {paginatedStudents.map((student, index) => (
-              <tr key={index} className="border-t">
+              <tr
+                key={index}
+                className={`${index % 2 === 0 ? "bg-gray-100" : "bg-gray-200"}`}
+              >
                 <td className="px-4 py-2">{student.name}</td>
                 <td className="px-4 py-2">{student.course}</td>
                 <td className="px-4 py-2">{student.semester}</td>
@@ -320,27 +253,28 @@ const StudentBalances = () => {
       </div>
 
       {/* Pagination */}
-      <div className="mt-6 flex justify-center">
-        <ReactPaginate
-          previousLabel="Previous"
-          nextLabel="Next"
-          pageCount={Math.ceil(filteredStudents.length / itemsPerPage)}
-          onPageChange={handlePageChange}
-          containerClassName="flex justify-center items-center space-x-2"
-          pageClassName="px-4 py-2 border rounded-lg cursor-pointer hover:bg-blue-600 hover:text-white"
-          previousClassName="px-4 py-2 border rounded-lg cursor-pointer hover:bg-blue-600 hover:text-white"
-          nextClassName="px-4 py-2 border rounded-lg cursor-pointer hover:bg-blue-600 hover:text-white"
-          activeClassName="bg-blue-600 text-white"
-        />
-      </div>
+      <ReactPaginate
+        previousLabel={"← Previous"}
+        nextLabel={"Next →"}
+        breakLabel={"..."}
+        pageCount={Math.ceil(filteredStudents.length / itemsPerPage)}
+        onPageChange={handlePageChange}
+        containerClassName={"flex justify-center mt-6"}
+        pageClassName={"px-3 py-2 border border-gray-300 mx-1 rounded"}
+        activeClassName={"bg-blue-600 text-white"}
+        previousClassName={"px-3 py-2 border border-gray-300 mx-1 rounded"}
+        nextClassName={"px-3 py-2 border border-gray-300 mx-1 rounded"}
+      />
 
-      {/* Export PDF */}
-      <button
-        onClick={generatePDF}
-        className="mt-6 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 w-full md:w-auto"
-      >
-        Export to PDF
-      </button>
+      {/* PDF Section */}
+      <div className="text-center mt-8">
+        <button
+          onClick={generatePDF}
+          className="bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700"
+        >
+          Generate PDF Report
+        </button>
+      </div>
     </div>
   );
 };

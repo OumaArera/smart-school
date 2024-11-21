@@ -1,10 +1,14 @@
 import React, { useState } from "react";
+import { jwtDecode } from 'jwt-decode';
 import logogi from './images/SCHOOL LOGO.PNG';
+
+const LOGIN_URL="https://smart-school-server-9aqb.onrender.com/users/login";
 
 const Login = () => {
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -22,18 +26,35 @@ const Login = () => {
       setIsSubmitting(false);
       return;
     }
-
-    // Simulating a backend call
     try {
       // Replace the following with an actual API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      alert("Form submitted successfully!");
+      const res = await fetch(LOGIN_URL, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(formData)
+      });
+      const result = await res.json();
 
-      // Clear inputs
-      setFormData({ username: "", password: "" });
+      if(result.success){
+        setFormData({ username: "", password: "" });
+        const decodedToken = jwtDecode(data.token);
+        const userDetails = {
+          id: decodedToken.id,
+          username: decodedToken.username,
+          name: decodedToken.name,
+          role: decodedToken.role
+        };
+        localStorage.setItem("userData", JSON.stringify(userDetails));
+        localStorage.setItem("accessToken", data.token);
+      }else{
+        setMessage(result.message);
+        setTimeout(() => setMessage(""), 5000);
+      }
+      
     } catch (error) {
       console.error("Submission failed:", error);
-      alert("Failed to submit. Please try again.");
+      setMessage("Failed to submit. Please try again.");
+        setTimeout(() => setMessage(""), 5000);
     } finally {
       setIsSubmitting(false);
     }
@@ -51,7 +72,7 @@ const Login = () => {
       <div className="w-1/2 bg-[#1D276C] flex items-center justify-center text-white">
         <form className="w-3/4 space-y-6" onSubmit={handleSubmit}>
           <h2 className="text-2xl font-bold">Login into your account</h2>
-
+          {message && <p className="text-red-500 mb-4">{message}</p>}
           <div className="space-y-4">
             {/* Username (Email) input */}
             <input

@@ -1,6 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+
+const STUDENTS_URL = "https://smart-school-server-9aqb.onrender.com/users/fees";
 
 const Payment = () => {
+  const [studentsData, setStudentsData] = useState([]);
   const [studentDetails, setStudentDetails] = useState(null);
   const [admissionNumber, setAdmissionNumber] = useState("");
   const [paymentDetails, setPaymentDetails] = useState({
@@ -11,15 +14,45 @@ const Payment = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionMessage, setSubmissionMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [token, setToken] = useState("");
 
-  const students = {
-    ADM001: { name: "John Doe", course: "Computer Science", year: "2", semester: "1" },
-    ADM002: { name: "Jane Smith", course: "Mechanical Engineering", year: "3", semester: "2" },
-    ADM003: { name: "Samuel Johnson", course: "Business Administration", year: "1", semester: "1" },
-  };
+  useEffect(() => {
+    // Load token from localStorage
+    const storedToken = localStorage.getItem("accessToken");
+    if (storedToken) setToken(storedToken);
+
+    // Fetch student details from API
+    const fetchStudentDetails = async () => {
+      if (!storedToken) return;
+      try {
+        const response = await fetch(STUDENTS_URL, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${storedToken}`,
+          },
+        });
+        const result = await response.json();
+        if (result.success) {
+          setStudentsData(result.data);
+        } else {
+          setSubmissionMessage(result.message);
+        }
+      } catch (error) {
+        setSubmissionMessage("Failed to fetch student details. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStudentDetails();
+  }, []);
 
   const handleFetchDetails = () => {
-    const details = students[admissionNumber.toUpperCase()];
+    const details = studentsData.find(
+      (student) => student.admissionNumber.toUpperCase() === admissionNumber.toUpperCase()
+    );
     if (details) {
       setStudentDetails(details);
       setSubmissionMessage("");
@@ -37,7 +70,7 @@ const Payment = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!studentDetails) {
       setSubmissionMessage("Please fetch student details first.");
@@ -47,25 +80,44 @@ const Payment = () => {
       setSubmissionMessage("Amount must be greater than zero.");
       return;
     }
-    setIsSubmitting(true);
 
-    setTimeout(() => {
-      console.log("Submitted Data:", {
-        ...paymentDetails,
-        studentDetails,
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(STUDENTS_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...paymentDetails,
+          studentId: studentDetails.studentId,
+        }),
       });
+      const result = await response.json();
+      if (result.success) {
+        setSubmissionMessage("Payment details submitted successfully!");
+        setStudentDetails(null);
+        setAdmissionNumber("");
+        setPaymentDetails({
+          amount: "",
+          paymentType: "MPESA",
+          transactionId: "",
+          purpose: "Tuition Fees",
+        });
+      } else {
+        setSubmissionMessage(result.message);
+      }
+    } catch (error) {
+      setSubmissionMessage("An error occurred while submitting the payment. Please try again.");
+    } finally {
       setIsSubmitting(false);
-      setSubmissionMessage("Payment details submitted successfully!");
-      setStudentDetails(null);
-      setAdmissionNumber("");
-      setPaymentDetails({
-        amount: "",
-        paymentType: "MPESA",
-        transactionId: "",
-        purpose: "Tuition Fees",
-      })
-    }, 2000);
+    }
   };
+
+  if (isLoading) {
+    return <p className="text-center text-blue-600">Loading student details...</p>;
+  }
 
   return (
     <div className="max-w-4xl mx-auto bg-gray-100 p-8 rounded-lg shadow-lg">
@@ -97,6 +149,8 @@ const Payment = () => {
           <p><strong>Course:</strong> {studentDetails.course}</p>
           <p><strong>Year:</strong> {studentDetails.year}</p>
           <p><strong>Semester:</strong> {studentDetails.semester}</p>
+          <p><strong>Fees Paid This Semester:</strong> KES {studentDetails.feesPaidThisSemester}</p>
+          <p><strong>Arrears:</strong> KES {studentDetails.arrears}</p>
         </div>
       )}
 

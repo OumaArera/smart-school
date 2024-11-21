@@ -1,7 +1,9 @@
-import React, { useState } from "react";
-import axios from "axios"; // Import axios to send data to the backend
+import React, { useEffect, useState } from "react";
 
-const BudgetReview = ({ budgets }) => {
+const BUDGET_URL = "https://smart-school-server-9aqb.onrender.com/users/budget";
+const BALANCE_URL= "https://smart-school-server-9aqb.onrender.com/users/balance";
+
+const BudgetReview = () => {
   const [reviewState, setReviewState] = useState(
     budgets.map((budget) => ({
       ...budget,
@@ -10,6 +12,75 @@ const BudgetReview = ({ budgets }) => {
     }))
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [budgets, setBudgets] = useState([]);
+  const [token, setToken] = useState("");
+  const [message, setMessage] = useState("");
+  const [success, setSuccess] = useState("");
+  const [balance, setBalance] = useState([]);
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem("accessToken");
+    if (storedToken) setToken(storedToken);
+  }, []);
+
+  useEffect(()=>{
+    pendingBudgets();
+    accountBalance();
+  }, [])
+
+  const accountBalance= async ()=>{
+    if(!token) return;
+    try {
+      const response = await fetch(BALANCE_URL, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        }
+      });
+      const result = await response.json();
+
+      if(result.success){
+        setBalance(result.data.balance)
+      } else{
+        setMessage(result.message);
+        setTimeout(()=> setMessage(""), 5000);
+      }
+      
+    } catch (error) {
+        console.log("Error: ", error)
+        setMessage("Failed to get budgets");
+        setTimeout(()=> setMessage(""), 5000);
+      
+    }
+  }
+
+  const pendingBudgets = async () =>{
+    if(!token) return;
+
+    try {
+      const response = await fetch(BUDGET_URL, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        }
+      });
+      const result = await response.json();
+
+      if(result.success){
+        setBudgets(result.data)
+      } else{
+        setMessage(result.message);
+        setTimeout(()=> setMessage(""), 5000);
+      }
+      
+    } catch (error) {
+        console.log("Error: ", error)
+        setMessage("Failed to get budgets");
+        setTimeout(()=> setMessage(""), 5000);
+    }
+  }
 
   // Handle changes in the approval/decline reason for each budget
   const handleReasonChange = (e, index) => {
@@ -22,6 +93,7 @@ const BudgetReview = ({ budgets }) => {
   // Handle approve/decline action
   const handleAction = async (e, index, action) => {
     e.preventDefault();
+    if(!token) return;
     const updatedState = [...reviewState];
     updatedState[index].status = action;
 
@@ -33,19 +105,28 @@ const BudgetReview = ({ budgets }) => {
 
     setIsSubmitting(true);
     try {
-      const response = await axios.post("/api/approve-decline-budget", {
-        budgetId: updatedState[index].id,
-        status: action,
-        reason: updatedState[index].reason,
+      const response = await fetch(`${BUDGET_URL}/${updatedState[index].id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({status: action, reason: updatedState[index].reason})
       });
 
-      if (response.status === 200) {
+      const result = await response.json();
+
+      if (result.success) {
         setReviewState(updatedState);
-        alert("Budget action has been processed successfully.");
-      }
+        setSuccess(result.message);
+        setTimeout(()=> setSuccess(""), 5000);
+        pendingBudgets();
+        accountBalance();
+      } 
     } catch (error) {
       console.error("Error processing budget action:", error);
-      alert("An error occurred while processing the action.");
+      setMessage("An error occurred while processing the action.");
+      setTimeout(()=> setMessage(""), 5000)
     } finally {
       setIsSubmitting(false);
     }
@@ -54,6 +135,14 @@ const BudgetReview = ({ budgets }) => {
   return (
     <div className="max-w-4xl mx-auto p-8 bg-white rounded-lg shadow-md">
       <h1 className="text-3xl font-bold text-center text-blue-600 mb-6">Review Budgets</h1>
+      {message && <p className="text-red-500 mb-4">{message}</p>}
+      {success && <p className="text-green-600 mb-4">{success}</p>}
+
+      {balance !== null && (
+        <div className="mb-6 p-4 bg-blue-50 rounded-lg shadow-md">
+          <h2 className="text-lg font-semibold text-blue-600">Account Balance: KES {balance}</h2>
+        </div>
+      )}
 
       <div>
         {reviewState.map((budget, index) => (
